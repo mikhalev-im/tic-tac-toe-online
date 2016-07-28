@@ -1,0 +1,28 @@
+html {
+  font-family: Arial;
+}
+
+.gameboard {
+  margin: 50px auto;
+  width: 800px;
+}
+
+.header {
+  text-align: center;
+}
+
+.gameboard-wrapper {
+  width: 150px;
+  height: 150px;
+  margin: 0 auto;
+}
+
+.cell {
+  border: 1px solid #ccc;
+  width: 48px;
+  height: 48px;
+  float: left;
+  text-align: center;
+  font-size: 40px;
+}
+

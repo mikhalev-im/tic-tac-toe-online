@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tic tac toe online</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <section class="gameboard">
+    <h1 class="header">Welcome to tic tac toe online!</h1>
+    <div class="gameboard-wrapper" id="board">
+      <div class="cell"></div>
+      <div class="cell"></div>
+      <div class="cell"></div>
+      <div class="cell"></div>
+      <div class="cell"></div>
+      <div class="cell"></div>
+      <div class="cell"></div>
+      <div class="cell"></div>
+      <div class="cell"></div>
+    </div>
+    <p class="state" id='state'></p>
+  </section>
+  <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+  <script src='/js/tic.js'></script>
+</body>
+</html>
