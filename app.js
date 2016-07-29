@@ -4,6 +4,9 @@ const app = express();
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
 
+const TicTacToe = require('./app/models/tictactoe');
+var Game = new TicTacToe();
+
 const port = process.env.port || 3000;
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -13,7 +16,15 @@ app.get('/', function (req, res) {
 });
 
 io.on('connection', function(socket) {
-  console.log('get connetction');
+  console.log('A user connected');
+  Game.start(socket.id.toString(), function() {
+
+  });
+
+
+  socket.on('disconnect', function() {
+    console.log('User disconnected');
+  });
 });
 
 http.listen(port, function() {

@@ -26,3 +26,12 @@ html {
   font-size: 40px;
 }
 
+.state {
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  text-align: center;
+  padding: 5px;
+  width: 50%;
+  margin: 20px auto;
+}
+
