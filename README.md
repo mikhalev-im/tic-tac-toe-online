@@ -1,2 +1,2 @@
 # tic-tac-toe-online
-Simple online multiplayer game
+Simple online multiplayer game using Express and Socket.io
