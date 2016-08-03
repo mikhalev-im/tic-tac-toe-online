@@ -16,14 +16,53 @@ app.get('/', function (req, res) {
 });
 
 io.on('connection', function(socket) {
-  console.log('A user connected');
-  Game.start(socket.id.toString(), function() {
+  console.log('A user connected, id: ' + socket.id);
+  Game.init(socket.id, function(ready, gameId, opponent, x, y) {
+    if (ready) {
+      socket.join(gameId);
+      io.sockets.connected[opponent].join(gameId);
 
+      socket.emit('ready', {
+        gameId: gameId,
+        userSign: 'X',
+        turn: true
+      });
+
+      io.to(opponent).emit('ready', {
+        gameId: gameId,
+        userSign: 'O',
+        turn: false
+      });
+
+    } else {
+      socket.emit('wait');
+    }
   });
 
+  socket.on('move', function(cell, sign) {
+    let gameId = Game.usersPlaying[socket.id];
+    
+    Game.move(gameId, socket.id, cell, function(result, winCells) {
+      let opponent = Game.gamesOnline[gameId].user.id === socket.id ? Game.gamesOnline[gameId].opponent.id : Game.gamesOnline[gameId].user.id;
+
+      if (result) {
+        io.to(opponent).emit('lose', winCells);
+        socket.emit('win', winCells);
+      } else {
+        io.to(opponent).emit('move', cell);
+      }
+    });
+  });
 
   socket.on('disconnect', function() {
-    console.log('User disconnected');
+    console.log('User disconnected ' + socket.id);
+
+    Game.endGame(socket.id, function(opponent) {
+      console.log('Opponent: ' + opponent);
+      if (opponent) {
+        socket.to(opponent).emit('opponentLeft');
+      }
+    });
   });
 });
 

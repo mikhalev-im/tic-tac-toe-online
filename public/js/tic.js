@@ -1,5 +1,7 @@
 (function() {
   
+  var stateBoard = document.getElementById('state');
+  var socket = io.connect(window.location.host);
   var TicTacToe = {
     gameId: null,
     userSign: null,
@@ -7,9 +9,6 @@
   }
 
   TicTacToe.init = function() {
-
-    var socket = io.connect(window.location.host),
-        stateBoard = document.getElementById('state');
 
     socket.on('connect', function() {
       stateBoard.innerHTML = 'Successfully connected to server';
@@ -38,17 +37,41 @@
       TicTacToe.userSign = data.userSign;
       TicTacToe.turn = (data.userSign === 'X' ? true : false);
 
-      stateBoard.innerHTML = 'Opponent connected, it is ' + (TicTacToe.turn ? 'your' : 'opponents') + 'turn';
+      stateBoard.innerHTML = 'Opponent connected, it is ' + (TicTacToe.turn ? 'your' : 'opponents') + ' turn';
       TicTacToe.startGame();
     });
 
-    socket.on('move', function(data) {
-
+    socket.on('move', function(cellId) {
+      var cell = document.getElementById(cellId);
+      cell.innerHTML = TicTacToe.userSign === 'X' ? 'O' : 'X';
+      TicTacToe.turn = true;
+      stateBoard.innerHTML = 'It is your turn';
+      document.getElementById(cellId).removeEventListener('click', TicTacToe._makeMoveListener);
     });
 
-    socket.on('game end', function(data) {
+    socket.on('win', function(winCells) {
       // End of game or opponent disconnect
+      
+      for (let i = 0; i < winCells.length; i++) {
+        document.getElementById(winCells[i]).innerHTML = TicTacToe.userSign;
+        document.getElementById(winCells[i]).style.color = 'green';
+      }
+      stateBoard.innerHTML = "You win!";
+    });
 
+    socket.on('lose', function(winCells) {
+      let sign = TicTacToe.userSign === 'X' ? 'O' : 'X';
+      
+      for (let i = 0; i < winCells.length; i++) {
+        document.getElementById(winCells[i]).innerHTML = sign;
+        document.getElementById(winCells[i]).style.color = 'red';
+      }
+      stateBoard.innerHTML = "You lose";
+    });
+
+    socket.on('opponentLeft', function() {
+      TicTacToe.turn = false;
+      stateBoard.innerHTML = "Opponent has left the game, You win";
     });
 
   }
@@ -62,20 +85,25 @@
       cells[i].addEventListener('mouseout', function(el) {
         el.target.style.borderColor = '';
       });
-      cells[i].addEventListener('click', function(el) {
-        if (TicTacToe.turn) {
-          el.target.innerHTML = TicTacToe.userSign;
-          TicTacToe.makeMove(el.id);
-        }
-      });
+      cells[i].addEventListener('click', TicTacToe._makeMoveListener);
     }
   }
 
-  TicTacToe.mask = function() {}
-
-  TicTacToe.makeMove = function() {}
+  TicTacToe.makeMove = function(cell) {
+    socket.emit('move', cell, TicTacToe.userSign);
+    document.getElementById(cell).removeEventListener('click', TicTacToe._makeMoveListener);
+  }
 
   TicTacToe.endGame = function() {}
+
+  TicTacToe._makeMoveListener = function(el) {
+    if (TicTacToe.turn) {
+      el.target.innerHTML = TicTacToe.userSign;
+      TicTacToe.turn = false;
+      stateBoard.innerHTML = 'Opponents turn';
+      TicTacToe.makeMove(el.target.id);
+    }
+  }
 
   window.onload = TicTacToe.init();
 
