@@ -58,7 +58,7 @@ TicTacToe.prototype.move = function(gameId, user, cell, cb) {
 
   this.gamesOnline[gameId].board[cell[0]][cell[1]] = sign;
 
-  this.checkWin(gameId, cell, sign, cb);
+  this._checkWin(gameId, cell, sign, cb);
 }
 
 TicTacToe.prototype.endGame = function(user, cb) {
@@ -81,7 +81,7 @@ TicTacToe.prototype.endGame = function(user, cb) {
   }
 };
 
-TicTacToe.prototype.checkWin = function(gameId, lastMove, sign, cb) {
+TicTacToe.prototype._checkWin = function(gameId, lastMove, sign, cb) {
   let board = this.gamesOnline[gameId].board,
       stepsToWin = this.gamesOnline[gameId].stepsToWin,
       winCells = [lastMove.join('-')],

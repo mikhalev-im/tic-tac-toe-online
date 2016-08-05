@@ -61,7 +61,7 @@ describe('socket', function() {
 
   describe('2 players behavior', function(done) {
 
-    let client1, client2, data1, data2;
+    let client1, client2, data;
 
     before(function(done) {
       client1 = io.connect(server.url);
@@ -87,6 +87,23 @@ describe('socket', function() {
 
     it('should send ready and data when 2 users ready to play', function() {
       assert.equal(typeof data.gameId === 'string' && typeof data.userSign === 'string' && typeof data.turn === 'boolean', true);
+    });
+
+    it('should send move and cellId on somones move', function(done) {
+      client2.on('move', function(cell) {
+        assert.equal(cell, '0-0');
+        done();
+      })
+
+      client1.emit('move', '0-0');
+    });
+
+    it('should send opponentLeft on opponent disconnect', function(done) {
+      client2.on('opponentLeft', function() {
+        done();
+      });
+
+      client1.disconnect();
     });
 
   });
