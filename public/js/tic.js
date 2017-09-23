@@ -1,110 +1,129 @@
 (function() {
-  
-  var stateBoard = document.getElementById('state');
-  var socket = io.connect(window.location.host);
   var TicTacToe = {
+    socket: null,
+
+    stateBoard: null,
+
     gameId: null,
+
     userSign: null,
-    turn: false
-  }
 
-  TicTacToe.init = function() {
+    turn: false,
 
-    socket.on('connect', function() {
-      stateBoard.innerHTML = 'Successfully connected to server';
-    });
+    showMessage: function(html) {
+      this.stateBoard.innerHTML = html;
+    },
 
-    socket.on('reconnect', function() {
-      stateBoard.innerHTML = 'Reconnected, continue playing';
-    });
+    onConnect: function() {
+      this.showMessage('Successfully connected to server');
+    },
 
-    socket.on('reconnecting', function() {
-      stateBoard.innerHTML = 'Trying to reconnect';
-    });
+    onReconnect: function() {
+      this.showMessage('Reconnected, continue playing');
+    },
 
-    socket.on('error', function(e) {
-      stateBoard.innerHTML = 'Error: ' + (e ? e : 'unknown');
-    });
+    onReconnecting: function() {
+      this.showMessage('Trying to reconnect');
+    },
 
-    // Game events
-    socket.on('wait', function() {
-      stateBoard.innerHTML = 'Waiting for opponent';
-    });
+    onError: function(e) {
+      this.showMessage('Error: ' + (e ? e : 'unknown'));
+    },
 
-    socket.on('ready', function(data) {
-      
-      TicTacToe.gameId = data.gameId;
-      TicTacToe.userSign = data.userSign;
-      TicTacToe.turn = (data.userSign === 'X' ? true : false);
+    onWait: function() {
+      this.showMessage('Waiting for opponent');
+    },
 
-      stateBoard.innerHTML = 'Opponent connected, it is ' + (TicTacToe.turn ? 'your' : 'opponents') + ' turn';
-      TicTacToe.startGame();
-    });
+    onReady: function(data) {
+      this.gameId = data.gameId;
+      this.userSign = data.userSign;
+      this.turn = (data.userSign === 'X' ? true : false);
 
-    socket.on('move', function(cellId) {
+      this.showMessage('Opponent connected, it is ' + (this.turn ? 'your' : 'opponents') + ' turn');
+      this.startGame();
+    },
+
+    onMove: function(cellId) {
       var cell = document.getElementById(cellId);
-      cell.innerHTML = TicTacToe.userSign === 'X' ? 'O' : 'X';
-      TicTacToe.turn = true;
-      stateBoard.innerHTML = 'It is your turn';
-      document.getElementById(cellId).removeEventListener('click', TicTacToe._makeMoveListener);
-    });
+      cell.innerHTML = this.userSign === 'X' ? 'O' : 'X';
+      this.turn = true;
 
-    socket.on('win', function(winCells) {
+      this.showMessage('It is your turn');
+      document.getElementById(cellId).removeEventListener('click', this.makeMoveListener);
+    },
+
+    onWin: function(winCells) {
       // End of game or opponent disconnect
-      
-      for (let i = 0; i < winCells.length; i++) {
-        document.getElementById(winCells[i]).innerHTML = TicTacToe.userSign;
+      for (var i = 0; i < winCells.length; i++) {
+        document.getElementById(winCells[i]).innerHTML = this.userSign;
         document.getElementById(winCells[i]).style.color = 'green';
       }
-      stateBoard.innerHTML = "You win!";
-    });
 
-    socket.on('lose', function(winCells) {
-      let sign = TicTacToe.userSign === 'X' ? 'O' : 'X';
-      
-      for (let i = 0; i < winCells.length; i++) {
+      this.showMessage("You win! <a href='javascript:void(0)' onclick='window.location.reload()'>Play again?</a>");
+    },
+
+    onLose: function(winCells) {
+      var sign = this.userSign === 'X' ? 'O' : 'X';
+
+      for (var i = 0; i < winCells.length; i++) {
         document.getElementById(winCells[i]).innerHTML = sign;
         document.getElementById(winCells[i]).style.color = 'red';
       }
-      stateBoard.innerHTML = "You lose";
-    });
 
-    socket.on('opponentLeft', function() {
-      TicTacToe.turn = false;
-      stateBoard.innerHTML = "Opponent has left the game, You win";
-    });
+      this.showMessage("You lose. <a href='javascript:void(0)' onclick='window.location.reload()'>Play again?</a>");
+    },
 
-  }
+    onOpponentLeft: function() {
+      this.turn = false;
+      this.showMessage("Opponent has left the game, You win. <a href='javascript:void(0)' onclick='window.location.reload()'>Play again?</a>");
+    },
 
-  TicTacToe.startGame = function() {
-    var cells = document.getElementsByClassName('cell');
-    for (var i = 0; i < cells.length; i++) {
-      cells[i].addEventListener('mouseover', function(el) {
-        el.target.style.borderColor = 'red';
-      });
-      cells[i].addEventListener('mouseout', function(el) {
-        el.target.style.borderColor = '';
-      });
-      cells[i].addEventListener('click', TicTacToe._makeMoveListener);
-    }
-  }
+    init: function() {
+      this.stateBoard = document.getElementById('state');
+      this.socket = io.connect(window.location.host);
+      this.makeMoveListener = this.makeMoveListener.bind(this);
 
-  TicTacToe.makeMove = function(cell) {
-    socket.emit('move', cell, TicTacToe.userSign);
-    document.getElementById(cell).removeEventListener('click', TicTacToe._makeMoveListener);
-  }
+      this.socket.on('connect', this.onConnect.bind(this));
+      this.socket.on('reconnect', this.onReconnect.bind(this));
+      this.socket.on('reconnecting', this.onReconnecting.bind(this));
+      this.socket.on('error', this.onError.bind(this));
 
-  TicTacToe.endGame = function() {}
+      // Game events
+      this.socket.on('wait', this.onWait.bind(this));
+      this.socket.on('ready', this.onReady.bind(this));
+      this.socket.on('move', this.onMove.bind(this));
+      this.socket.on('win', this.onWin.bind(this));
+      this.socket.on('lose', this.onLose.bind(this));
+      this.socket.on('opponentLeft', this.onOpponentLeft.bind(this));
+    },
 
-  TicTacToe._makeMoveListener = function(el) {
-    if (TicTacToe.turn) {
-      el.target.innerHTML = TicTacToe.userSign;
-      TicTacToe.turn = false;
-      stateBoard.innerHTML = 'Opponents turn';
-      TicTacToe.makeMove(el.target.id);
+    startGame: function() {
+      var cells = document.getElementsByClassName('cell');
+      for (var i = 0; i < cells.length; i++) {
+        cells[i].addEventListener('mouseover', function(el) {
+          el.currentTarget.style.borderColor = 'red';
+        });
+        cells[i].addEventListener('mouseout', function(el) {
+          el.currentTarget.style.borderColor = '';
+        });
+        cells[i].addEventListener('click', this.makeMoveListener);
+      }
+    },
+
+    makeMove: function(cell) {
+      this.socket.emit('move', cell, this.userSign);
+      document.getElementById(cell).removeEventListener('click', this.makeMoveListener);
+    },
+
+    makeMoveListener: function(el) {
+      if (this.turn) {
+        el.currentTarget.innerHTML = this.userSign;
+        this.turn = false;
+        this.showMessage('Opponents turn');
+        this.makeMove(el.currentTarget.id);
+      }
     }
   }
 
   window.onload = TicTacToe.init();
-
 })();

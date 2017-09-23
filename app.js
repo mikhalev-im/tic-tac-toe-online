@@ -56,7 +56,7 @@ io.on('connection', function(socket) {
 
   socket.on('disconnect', function() {
     console.log('A user disconnected, id ' + socket.id);
-// Need to close rooms
+    // Need to close rooms
     Game.endGame(socket.id, function(opponent) {
       if (opponent) {
         socket.to(opponent).emit('opponentLeft');
